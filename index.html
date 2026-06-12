@@ -350,7 +350,7 @@
   //   Stripe 側「お支払い後の遷移先(redirect)」を このページ + ?paid=1 に設定してください。
   //   例: https://ic-yusukesugihara.github.io/asovision-kekka-result/?paid=1
   // 注意: 静的ページのため「見た目のロック」です(開発者ツール等で回避可能)。確実な課金保護にはバックエンドが必要。
-  var STRIPE_LINK = "https://buy.stripe.com/test_PLACEHOLDER"; // ← 本番の決済リンクに差し替え
+  var STRIPE_LINK = "https://buy.stripe.com/28E9ATgdb4J78MMbXi04800"; // Stripe 決済リンク(2026-06-12 設定)
   var PAID_KEY = "kekka_paid_v1";
   var paidNow = (new URLSearchParams(location.search)).get('paid')==='1';
   var paidStored = false;
