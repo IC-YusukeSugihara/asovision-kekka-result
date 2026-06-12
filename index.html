@@ -261,12 +261,12 @@
       stars:toStars('chokaku'), copy:chokakuCopy(toStars('chokaku')),
       num:'おと '+d.oto_steps+'かい・'+d.oto_notes+'しゅるい',
       lessons:[['🎹','ピアノ'],['🎶','リトミック'],['🎤','うた']] },
-    { key:'undou',  label:'うんどう（からだ）', icon:'🏃', active:false, c:'var(--undou)', cd:'#a87f12' },
-    { key:'kotoba', label:'ことば',             icon:'📖', active:false, c:'var(--kotoba)', cd:'#3f7fb0' },
     { key:'shikumi',label:'しくみ（かんがえる）',icon:'🤖', active:true, c:'var(--shikumi)', cd:'var(--shikumi-d)',
       stars:toStars('shikumi'), copy:shikumiCopy(toStars('shikumi')),
       num:'じっこう '+d.shikumi_runs+'・ゴール '+d.shikumi_goals,
-      lessons:[['💻','プログラミング'],['🤖','ロボット'],['🧱','ブロックあそび']] }
+      lessons:[['💻','プログラミング'],['🤖','ロボット'],['🧱','ブロックあそび']] },
+    { key:'undou',  label:'うんどう（からだ）', icon:'🏃', active:false, c:'var(--undou)', cd:'#a87f12' },
+    { key:'kotoba', label:'ことば',             icon:'📖', active:false, c:'var(--kotoba)', cd:'#3f7fb0' }
   ];
 
   var tbox=document.getElementById('types');
