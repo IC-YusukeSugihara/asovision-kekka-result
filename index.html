@@ -52,6 +52,7 @@
   .order{margin:26px auto 8px;text-align:center;}
   .order h2,.cards h2,.detail h2{font-size:16px;font-weight:700;color:var(--gold);letter-spacing:.12em;
     margin-bottom:12px;opacity:.95;}
+  .dsub{text-align:center;font-size:13px;color:#cfc8e6;opacity:.85;margin:-6px 0 16px;}
   .stamps{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;}
   .stamp{display:flex;flex-direction:column;align-items:center;gap:4px;
     background:rgba(255,255,255,.06);border:1.5px solid rgba(250,238,218,.25);
@@ -152,6 +153,7 @@
 
   <section class="detail" id="detail">
     <h2>きみの とくいの め</h2>
+    <p class="dsub">きみの なかで くらべた けっかだよ ✨</p>
     <div id="types"></div>
     <div class="reco" id="reco"></div>
   </section>
@@ -216,14 +218,31 @@
   });
 
   // ===== 詳細: 5タイプ評価 =====
-  // ★ 杉原様/岸田様 調整可能: しきい値 と スコア式。全肯定のため最低1★。
-  var STAR_TH = [3, 8, 16, 28];           // value >= これ -> 2,3,4,5★ (それ未満は1★)
-  function toStars(v){ var s=1; for(var i=0;i<STAR_TH.length;i++){ if(v>=STAR_TH[i]) s=i+2; } return s; }
-  var score = {
-    shikaku: d.iro_taps + d.iro_colors*2 + Math.floor(secs(d.iro_dwell)/10),
-    chokaku: d.oto_steps + d.oto_notes*2 + Math.floor(secs(d.oto_dwell)/10),
-    shikumi: d.shikumi_place + d.shikumi_runs*2 + d.shikumi_goals*5 + Math.floor(secs(d.shikumi_dwell)/10)
+  // ===== 相対評価(2026-06-12 改訂) =====
+  // ・滞在時間(dwell)は不正確なため評価から除外(表示も省略)。
+  // ・各タイプを「自分の中での割合(シェア)」で評価。シェアの合計は一定のため、
+  //   全部の部屋でたくさん遊んでも"全部の星が上がる"ことはない(相対表示)。
+  // ★ 調整可能: REF(各タイプの「じゅうぶん遊んだ」目安) と シェア→星のしきい値。
+  var REF = 20; // 各タイプの基準値(raw がこれで norm=1.0 に飽和)
+  var raw = {
+    shikaku: d.iro_taps + d.iro_colors*2,
+    chokaku: d.oto_steps + d.oto_notes*2,
+    shikumi: d.shikumi_place + d.shikumi_runs*2 + d.shikumi_goals*5
   };
+  function norm(v){ return Math.min(1, v/REF); }
+  var nrm = { shikaku:norm(raw.shikaku), chokaku:norm(raw.chokaku), shikumi:norm(raw.shikumi) };
+  var nsum = nrm.shikaku + nrm.chokaku + nrm.shikumi;
+  function toStars(key){
+    if(nsum<=0) return 1;            // 全く操作なし -> 一律 1★
+    var sh = nrm[key]/nsum;          // 全体に占める割合(3タイプ均等なら 0.33)
+    if(sh>=0.45) return 5;
+    if(sh>=0.38) return 4;
+    if(sh>=0.28) return 3;
+    if(sh>=0.18) return 2;
+    return 1;
+  }
+  // おすすめ判定用(=raw。相対比較の元。同点は shikaku>chokaku>shikumi)
+  var score = { shikaku:raw.shikaku, chokaku:raw.chokaku, shikumi:raw.shikumi };
 
   function starHTML(s){
     var h=''; for(var i=1;i<=5;i++){ h += '<span class="'+(i<=s?'on':'off')+'">★</span>'; } return h;
@@ -235,18 +254,18 @@
   // 5タイプ(設計書の順: 視覚・聴覚・運動・ことば・しくみ)。運動・ことばは「これからのへや」。
   var TYPES = [
     { key:'shikaku', label:'しかく（みる）',     icon:'👁️', active:true, c:'var(--iro)',     cd:'var(--iro-d)',
-      stars:toStars(score.shikaku), copy:shikakuCopy(toStars(score.shikaku)),
-      num:'タップ '+d.iro_taps+'かい・いろ '+d.iro_colors+'しゅるい・'+secs(d.iro_dwell)+'びょう',
+      stars:toStars('shikaku'), copy:shikakuCopy(toStars('shikaku')),
+      num:'タップ '+d.iro_taps+'かい・いろ '+d.iro_colors+'しゅるい',
       lessons:[['🎨','おえかき'],['🖌️','アート'],['🧩','こうさく']] },
     { key:'chokaku', label:'ちょうかく（きく）', icon:'👂', active:true, c:'var(--oto)',     cd:'var(--oto-d)',
-      stars:toStars(score.chokaku), copy:chokakuCopy(toStars(score.chokaku)),
-      num:'おと '+d.oto_steps+'かい・'+d.oto_notes+'しゅるい・'+secs(d.oto_dwell)+'びょう',
+      stars:toStars('chokaku'), copy:chokakuCopy(toStars('chokaku')),
+      num:'おと '+d.oto_steps+'かい・'+d.oto_notes+'しゅるい',
       lessons:[['🎹','ピアノ'],['🎶','リトミック'],['🎤','うた']] },
     { key:'undou',  label:'うんどう（からだ）', icon:'🏃', active:false, c:'var(--undou)', cd:'#a87f12' },
     { key:'kotoba', label:'ことば',             icon:'📖', active:false, c:'var(--kotoba)', cd:'#3f7fb0' },
     { key:'shikumi',label:'しくみ（かんがえる）',icon:'🤖', active:true, c:'var(--shikumi)', cd:'var(--shikumi-d)',
-      stars:toStars(score.shikumi), copy:shikumiCopy(toStars(score.shikumi)),
-      num:'じっこう '+d.shikumi_runs+'・ゴール '+d.shikumi_goals+'・'+secs(d.shikumi_dwell)+'びょう',
+      stars:toStars('shikumi'), copy:shikumiCopy(toStars('shikumi')),
+      num:'じっこう '+d.shikumi_runs+'・ゴール '+d.shikumi_goals,
       lessons:[['💻','プログラミング'],['🤖','ロボット'],['🧱','ブロックあそび']] }
   ];
 
