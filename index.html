@@ -121,6 +121,23 @@
     border:2px solid var(--gold);}
   .chip .ce{margin-right:6px;}
 
+  /* 有料化: ソフトモザイク */
+  .locked-wrap{position:relative;}
+  .locked-content{transition:filter .35s ease;}
+  .locked .locked-content{filter:blur(9px);pointer-events:none;user-select:none;}
+  .lock-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:16px;}
+  .locked .lock-overlay{display:flex;}
+  .lock-card{background:rgba(20,17,40,.9);border:2px solid var(--gold);border-radius:22px;
+    padding:26px 22px;text-align:center;max-width:380px;box-shadow:0 14px 44px rgba(0,0,0,.55);}
+  .lock-ico{font-size:42px;filter:drop-shadow(0 3px 8px rgba(239,159,39,.5));}
+  .lock-title{font-size:18px;font-weight:800;color:var(--sun);margin-top:8px;}
+  .lock-sub{font-size:13px;color:#EADFc8;margin-top:8px;line-height:1.6;}
+  .lock-pay{display:inline-block;margin-top:18px;padding:13px 26px;border-radius:999px;
+    background:linear-gradient(180deg,var(--sun),var(--gold));color:#3a2200;font-weight:800;font-size:15px;
+    text-decoration:none;box-shadow:0 5px 16px rgba(239,159,39,.5);transition:transform .12s ease;}
+  .lock-pay:hover{transform:translateY(-2px);}
+  .lock-note{font-size:11px;color:#9aa6b2;margin-top:12px;}
+
   .brand{margin-top:26px;text-align:center;font-size:12px;color:#7d869a;letter-spacing:.08em;}
 </style>
 </head>
@@ -154,8 +171,21 @@
   <section class="detail" id="detail">
     <h2>きみの とくいの め</h2>
     <p class="dsub">きみの なかで くらべた けっかだよ ✨</p>
-    <div id="types"></div>
-    <div class="reco" id="reco"></div>
+    <div class="locked-wrap locked" id="lockWrap">
+      <div class="locked-content">
+        <div id="types"></div>
+        <div class="reco" id="reco"></div>
+      </div>
+      <div class="lock-overlay">
+        <div class="lock-card">
+          <div class="lock-ico">🔒</div>
+          <p class="lock-title">くわしい けっかは ゆうりょうです</p>
+          <p class="lock-sub">5 タイプの とくいの め と、おすすめの ならいごとが ぜんぶ みられます</p>
+          <a class="lock-pay" id="payBtn" href="#" rel="noopener">詳しい結果を見る（お支払いへ）</a>
+          <p class="lock-note">お支払い後、このページで じどうてきに ひらきます</p>
+        </div>
+      </div>
+    </div>
   </section>
 
   <p class="brand">ASOVision Connect</p>
@@ -165,6 +195,12 @@
 (function(){
   "use strict";
   var p = new URLSearchParams(location.search);
+  // 有料化: Stripe 決済の往復で結果データが失われた場合、保存値から復元(同一ブラウザ)
+  if(p.get('vorder_iro')===null && p.get('iro_taps')===null){
+    try{ var sv=localStorage.getItem('kekka_data'); if(sv){ var kp=p.get('paid'); p=new URLSearchParams(sv); if(kp) p.set('paid',kp); } }catch(e){}
+  } else {
+    try{ localStorage.setItem('kekka_data', location.search); }catch(e){}
+  }
   function num(k){ var v = parseInt(p.get(k),10); return (isNaN(v)||v<0)?0:v; }
 
   var d = {
@@ -308,6 +344,24 @@
       detail.scrollIntoView({behavior:'smooth', block:'start'});
     }
   });
+
+  // ===== 有料化(ソフトモザイク・2026-06-12) =====
+  // ★ 杉原様: STRIPE_LINK を Stripe の決済リンク URL に差し替えてください。
+  //   Stripe 側「お支払い後の遷移先(redirect)」を このページ + ?paid=1 に設定してください。
+  //   例: https://ic-yusukesugihara.github.io/asovision-kekka-result/?paid=1
+  // 注意: 静的ページのため「見た目のロック」です(開発者ツール等で回避可能)。確実な課金保護にはバックエンドが必要。
+  var STRIPE_LINK = "https://buy.stripe.com/test_PLACEHOLDER"; // ← 本番の決済リンクに差し替え
+  var PAID_KEY = "kekka_paid_v1";
+  var paidNow = (new URLSearchParams(location.search)).get('paid')==='1';
+  var paidStored = false;
+  try{ paidStored = localStorage.getItem(PAID_KEY)==='1'; }catch(e){}
+  if(paidNow){ try{ localStorage.setItem(PAID_KEY,'1'); }catch(e){} }
+  var lockWrap = document.getElementById('lockWrap');
+  if(paidNow || paidStored){ lockWrap.classList.remove('locked'); }
+  var payBtn = document.getElementById('payBtn');
+  payBtn.setAttribute('href', STRIPE_LINK);
+  // 決済前に結果データを保存(Stripe 往復後に復元するため)
+  payBtn.addEventListener('click', function(){ try{ localStorage.setItem('kekka_data', location.search); }catch(e){} });
 
   // ===== 装飾: 星 + 紙吹雪 =====
   var sc=document.getElementById('stars');
