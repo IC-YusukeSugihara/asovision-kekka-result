@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex" />
+<title>たんけんの けっか｜ASOVision Connect</title>
+<style>
+  /* ===== ASOVision Connect / 05 Kekka 結果ページ (v1 簡易サマリ) =====
+     URL クエリ契約: vorder_iro/oto/shikumi(1-3), iro_taps, oto_steps,
+     shikumi_place, shikumi_runs, shikumi_goals (すべて非負整数)
+     デザイン: 達成の殿堂 × 星空 / 全肯定 / 5歳児配慮(ひらがな) */
+  :root{
+    --gold:#EF9F27; --gold-dark:#BA7517; --sun:#FAC775;
+    --cream:#FAF6EC; --ink:#042C53;
+    --iro:#F0997B; --iro-d:#D85A30;
+    --oto:#AFA9EC; --oto-d:#7F77DD;
+    --shikumi:#5DCAA5; --shikumi-d:#1D9E75;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{min-height:100%;}
+  body{
+    font-family:"Hiragino Maru Gothic ProN","Hiragino Kaku Gothic ProN",
+      "Rounded Mplus 1c","BIZ UDPGothic","Yu Gothic UI",system-ui,sans-serif;
+    color:var(--cream);
+    background:
+      radial-gradient(120% 90% at 50% -10%, #241a3e 0%, #15112b 42%, #0F1024 70%, #241803 100%);
+    background-attachment:fixed;
+    overflow-x:hidden; position:relative;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  /* 星空 */
+  #stars,#confetti{position:fixed;inset:0;pointer-events:none;z-index:0;}
+  .star{position:absolute;background:#FAEEDA;border-radius:50%;
+    box-shadow:0 0 6px #FAEEDA;animation:tw var(--d,3s) ease-in-out infinite var(--dl,0s);}
+  @keyframes tw{0%,100%{opacity:.25;transform:scale(.8);}50%{opacity:1;transform:scale(1.15);}}
+  .cf{position:absolute;top:-20px;width:9px;height:14px;border-radius:2px;opacity:.9;
+    animation:fall var(--fd,7s) linear infinite var(--fl,0s);}
+  @keyframes fall{0%{transform:translateY(-20px) rotate(0);}100%{transform:translateY(108vh) rotate(540deg);}}
+
+  .wrap{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:32px 18px 56px;}
+
+  /* ヒーロー */
+  .hero{text-align:center;padding:18px 10px 8px;}
+  .crown{font-size:54px;filter:drop-shadow(0 4px 10px rgba(239,159,39,.55));animation:pop .8s cubic-bezier(.2,1.3,.5,1) both;}
+  .hero h1{margin:.18em 0 .12em;font-size:clamp(28px,7vw,44px);font-weight:800;
+    color:var(--sun);letter-spacing:.02em;text-shadow:0 2px 16px rgba(250,199,117,.45);}
+  .hero p{font-size:clamp(15px,3.6vw,19px);color:#EADFc8;opacity:.92;}
+  @keyframes pop{0%{transform:scale(0) rotate(-12deg);opacity:0;}100%{transform:scale(1) rotate(0);opacity:1;}}
+
+  /* たんけんじゅん */
+  .order{margin:26px auto 8px;text-align:center;}
+  .order h2,.cards h2{font-size:16px;font-weight:700;color:var(--gold);letter-spacing:.12em;
+    margin-bottom:12px;opacity:.95;}
+  .stamps{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;}
+  .stamp{display:flex;flex-direction:column;align-items:center;gap:4px;
+    background:rgba(255,255,255,.06);border:1.5px solid rgba(250,238,218,.25);
+    border-radius:16px;padding:10px 12px;min-width:78px;animation:pop .6s both;}
+  .stamp .n{font-size:13px;font-weight:800;color:var(--ink);background:var(--sun);
+    width:22px;height:22px;border-radius:50%;display:grid;place-items:center;}
+  .stamp .e{font-size:26px;}
+  .stamp .l{font-size:12px;color:#EADFc8;}
+  .arrow{color:var(--gold);font-size:20px;opacity:.7;}
+
+  /* カード */
+  .cards{margin-top:30px;}
+  .grid{display:grid;grid-template-columns:1fr;gap:16px;}
+  @media(min-width:620px){.grid{grid-template-columns:repeat(3,1fr);}}
+  .card{background:var(--cream);color:var(--ink);border-radius:22px;padding:20px 18px 22px;
+    border:3px solid var(--rc,var(--gold));position:relative;overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.35);animation:pop .6s both;}
+  .card::before{content:"";position:absolute;inset:0 0 auto 0;height:8px;background:var(--rc,var(--gold));}
+  .card .ico{font-size:42px;line-height:1;margin:6px 0 8px;
+    filter:drop-shadow(0 3px 6px rgba(0,0,0,.18));}
+  .card .rn{font-size:15px;font-weight:800;color:var(--rcd,var(--gold-dark));letter-spacing:.04em;}
+  .card .msg{font-size:18px;font-weight:700;margin-top:8px;line-height:1.5;}
+  .card .num{font-size:13px;color:#6a737d;margin-top:10px;}
+  .badge{display:inline-block;margin-top:10px;background:var(--gold);color:#fff;
+    font-size:13px;font-weight:800;padding:4px 12px;border-radius:999px;
+    box-shadow:0 3px 8px rgba(239,159,39,.5);}
+
+  /* フッター */
+  .foot{margin-top:34px;text-align:center;background:rgba(255,255,255,.05);
+    border:1.5px solid rgba(250,238,218,.18);border-radius:20px;padding:22px 18px;}
+  .foot p{font-size:15px;color:#EADFc8;line-height:1.7;}
+  .foot .more{display:inline-block;margin-top:14px;padding:12px 22px;border-radius:999px;
+    background:linear-gradient(180deg,var(--sun),var(--gold));color:#3a2200;font-weight:800;
+    font-size:15px;border:none;box-shadow:0 5px 16px rgba(239,159,39,.45);cursor:not-allowed;opacity:.75;}
+  .foot .note{margin-top:10px;font-size:12px;color:#9aa6b2;opacity:.85;}
+  .brand{margin-top:26px;text-align:center;font-size:12px;color:#7d869a;letter-spacing:.08em;}
+</style>
+</head>
+<body>
+<div id="stars" aria-hidden="true"></div>
+<div id="confetti" aria-hidden="true"></div>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="crown">👑</div>
+    <h1>たんけん、おつかれさま！</h1>
+    <p id="sub">きょうの きみの きろく だよ</p>
+  </section>
+
+  <section class="order">
+    <h2>たんけん した じゅんばん</h2>
+    <div class="stamps" id="stamps"></div>
+  </section>
+
+  <section class="cards">
+    <h2>やってみた こと</h2>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="foot">
+    <p>くわしい けっかは<br>おうちのひとと いっしょに みてね 🌟</p>
+    <button class="more" type="button" disabled>くわしく みる（じゅんびちゅう）</button>
+    <p class="note">※ 5タイプのくわしい てきせい けっかは じゅんびちゅうです</p>
+  </section>
+
+  <p class="brand">ASOVision Connect</p>
+</main>
+
+<script>
+(function(){
+  "use strict";
+  var p = new URLSearchParams(location.search);
+  function num(k){ var v = parseInt(p.get(k),10); return (isNaN(v)||v<0)?0:v; }
+
+  var d = {
+    order:{ iro:num('vorder_iro'), oto:num('vorder_oto'), shikumi:num('vorder_shikumi') },
+    iro_taps:num('iro_taps'), oto_steps:num('oto_steps'),
+    shikumi_place:num('shikumi_place'), shikumi_runs:num('shikumi_runs'),
+    shikumi_goals:num('shikumi_goals')
+  };
+
+  var rooms = {
+    iro:    { label:'いろと かたち', icon:'🎨', c:'var(--iro)',     cd:'var(--iro-d)' },
+    oto:    { label:'おとの へや',   icon:'🎵', c:'var(--oto)',     cd:'var(--oto-d)' },
+    shikumi:{ label:'しくみの へや', icon:'🤖', c:'var(--shikumi)', cd:'var(--shikumi-d)' }
+  };
+
+  // ---- たんけんじゅん (order 1-3 で並べ替え。0=未記録は末尾) ----
+  var keys = ['iro','oto','shikumi'];
+  keys.sort(function(a,b){
+    var oa = d.order[a]||99, ob = d.order[b]||99; return oa - ob;
+  });
+  var stamps = document.getElementById('stamps');
+  keys.forEach(function(k,i){
+    if(i>0){ var ar=document.createElement('span'); ar.className='arrow'; ar.textContent='▶'; stamps.appendChild(ar); }
+    var o = d.order[k];
+    var el = document.createElement('div'); el.className='stamp';
+    el.style.animationDelay = (i*0.12)+'s';
+    el.innerHTML = '<span class="n">'+(o>0?o:'–')+'</span>'+
+                   '<span class="e">'+rooms[k].icon+'</span>'+
+                   '<span class="l">'+rooms[k].label+'</span>';
+    stamps.appendChild(el);
+  });
+
+  // ---- やってみたこと カード (全肯定) ----
+  function iroMsg(){ return d.iro_taps>0 ? ('いろや かたちを '+d.iro_taps+'かい ためしたね！') : 'いろの へやを のぞいたね！'; }
+  function otoMsg(){ return d.oto_steps>0 ? ('おとを '+d.oto_steps+'かい ならしたね！') : 'おとの へやを のぞいたね！'; }
+  function shikumiMsg(){
+    if(d.shikumi_goals>0) return 'ロボットで ゴール できたね！';
+    if(d.shikumi_runs>0)  return 'ロボットを '+d.shikumi_runs+'かい うごかしたね！';
+    if(d.shikumi_place>0) return 'ぶひんを あつめたね！';
+    return 'しくみの へやを のぞいたね！';
+  }
+  var cards = [
+    { k:'iro',     msg:iroMsg(),     num:'タップ '+d.iro_taps+'かい',   badge:'' },
+    { k:'oto',     msg:otoMsg(),     num:'ステップ '+d.oto_steps+'かい', badge:'' },
+    { k:'shikumi', msg:shikumiMsg(), num:'じっこう '+d.shikumi_runs+'かい / ゴール '+d.shikumi_goals+'かい',
+      badge: d.shikumi_goals>0 ? '🏆 クリア！' : '' }
+  ];
+  var grid = document.getElementById('grid');
+  cards.forEach(function(c,i){
+    var r = rooms[c.k];
+    var el = document.createElement('div'); el.className='card';
+    el.style.setProperty('--rc', r.c); el.style.setProperty('--rcd', r.cd);
+    el.style.animationDelay = (0.15 + i*0.12)+'s';
+    el.innerHTML = '<div class="ico">'+r.icon+'</div>'+
+                   '<div class="rn">'+r.label+'</div>'+
+                   '<div class="msg">'+c.msg+'</div>'+
+                   (c.badge?('<div class="badge">'+c.badge+'</div>'):'')+
+                   '<div class="num">'+c.num+'</div>';
+    grid.appendChild(el);
+  });
+
+  // ---- 装飾: 星 + 紙吹雪 (軽量・自己生成) ----
+  var sc = document.getElementById('stars');
+  for(var s=0;s<70;s++){
+    var st=document.createElement('span'); st.className='star';
+    var size=Math.random()*2+1;
+    st.style.width=st.style.height=size+'px';
+    st.style.left=(Math.random()*100)+'%'; st.style.top=(Math.random()*100)+'%';
+    st.style.setProperty('--d',(Math.random()*3+2)+'s');
+    st.style.setProperty('--dl',(Math.random()*3)+'s');
+    sc.appendChild(st);
+  }
+  var cc=document.getElementById('confetti');
+  var cols=['#EF9F27','#FAC775','#F0997B','#AFA9EC','#5DCAA5','#FAEEDA'];
+  for(var f=0;f<26;f++){
+    var cf=document.createElement('span'); cf.className='cf';
+    cf.style.left=(Math.random()*100)+'%';
+    cf.style.background=cols[f%cols.length];
+    cf.style.setProperty('--fd',(Math.random()*5+6)+'s');
+    cf.style.setProperty('--fl',(Math.random()*8)+'s');
+    cc.appendChild(cf);
+  }
+})();
+</script>
+</body>
+</html>
