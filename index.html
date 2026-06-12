@@ -6,9 +6,11 @@
 <meta name="robots" content="noindex" />
 <title>たんけんの けっか｜ASOVision Connect</title>
 <style>
-  /* ===== ASOVision Connect / 05 Kekka 結果ページ (v1 簡易サマリ) =====
-     URL クエリ契約: vorder_iro/oto/shikumi(1-3), iro_taps, oto_steps,
-     shikumi_place, shikumi_runs, shikumi_goals (すべて非負整数)
+  /* ===== ASOVision Connect / 05 Kekka 結果ページ (v2 サマリ + 詳細5タイプ + おすすめ) =====
+     URL クエリ契約(すべて非負整数):
+       vorder_iro/oto/shikumi(1-3), iro_taps, oto_steps,
+       shikumi_place, shikumi_runs, shikumi_goals,
+       iro_colors(0-8), oto_notes(0-8), iro_dwell/oto_dwell/shikumi_dwell(frame ~60/秒)
      デザイン: 達成の殿堂 × 星空 / 全肯定 / 5歳児配慮(ひらがな) */
   :root{
     --gold:#EF9F27; --gold-dark:#BA7517; --sun:#FAC775;
@@ -16,6 +18,7 @@
     --iro:#F0997B; --iro-d:#D85A30;
     --oto:#AFA9EC; --oto-d:#7F77DD;
     --shikumi:#5DCAA5; --shikumi-d:#1D9E75;
+    --undou:#F2C14E; --kotoba:#7FB6E0;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{min-height:100%;}
@@ -29,7 +32,6 @@
     overflow-x:hidden; position:relative;
     -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
   }
-  /* 星空 */
   #stars,#confetti{position:fixed;inset:0;pointer-events:none;z-index:0;}
   .star{position:absolute;background:#FAEEDA;border-radius:50%;
     box-shadow:0 0 6px #FAEEDA;animation:tw var(--d,3s) ease-in-out infinite var(--dl,0s);}
@@ -38,9 +40,8 @@
     animation:fall var(--fd,7s) linear infinite var(--fl,0s);}
   @keyframes fall{0%{transform:translateY(-20px) rotate(0);}100%{transform:translateY(108vh) rotate(540deg);}}
 
-  .wrap{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:32px 18px 56px;}
+  .wrap{position:relative;z-index:1;max-width:780px;margin:0 auto;padding:32px 18px 56px;}
 
-  /* ヒーロー */
   .hero{text-align:center;padding:18px 10px 8px;}
   .crown{font-size:54px;filter:drop-shadow(0 4px 10px rgba(239,159,39,.55));animation:pop .8s cubic-bezier(.2,1.3,.5,1) both;}
   .hero h1{margin:.18em 0 .12em;font-size:clamp(28px,7vw,44px);font-weight:800;
@@ -48,9 +49,8 @@
   .hero p{font-size:clamp(15px,3.6vw,19px);color:#EADFc8;opacity:.92;}
   @keyframes pop{0%{transform:scale(0) rotate(-12deg);opacity:0;}100%{transform:scale(1) rotate(0);opacity:1;}}
 
-  /* たんけんじゅん */
   .order{margin:26px auto 8px;text-align:center;}
-  .order h2,.cards h2{font-size:16px;font-weight:700;color:var(--gold);letter-spacing:.12em;
+  .order h2,.cards h2,.detail h2{font-size:16px;font-weight:700;color:var(--gold);letter-spacing:.12em;
     margin-bottom:12px;opacity:.95;}
   .stamps{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;}
   .stamp{display:flex;flex-direction:column;align-items:center;gap:4px;
@@ -62,7 +62,6 @@
   .stamp .l{font-size:12px;color:#EADFc8;}
   .arrow{color:var(--gold);font-size:20px;opacity:.7;}
 
-  /* カード */
   .cards{margin-top:30px;}
   .grid{display:grid;grid-template-columns:1fr;gap:16px;}
   @media(min-width:620px){.grid{grid-template-columns:repeat(3,1fr);}}
@@ -70,23 +69,57 @@
     border:3px solid var(--rc,var(--gold));position:relative;overflow:hidden;
     box-shadow:0 10px 30px rgba(0,0,0,.35);animation:pop .6s both;}
   .card::before{content:"";position:absolute;inset:0 0 auto 0;height:8px;background:var(--rc,var(--gold));}
-  .card .ico{font-size:42px;line-height:1;margin:6px 0 8px;
-    filter:drop-shadow(0 3px 6px rgba(0,0,0,.18));}
+  .card .ico{font-size:42px;line-height:1;margin:6px 0 8px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.18));}
   .card .rn{font-size:15px;font-weight:800;color:var(--rcd,var(--gold-dark));letter-spacing:.04em;}
   .card .msg{font-size:18px;font-weight:700;margin-top:8px;line-height:1.5;}
   .card .num{font-size:13px;color:#6a737d;margin-top:10px;}
   .badge{display:inline-block;margin-top:10px;background:var(--gold);color:#fff;
-    font-size:13px;font-weight:800;padding:4px 12px;border-radius:999px;
-    box-shadow:0 3px 8px rgba(239,159,39,.5);}
+    font-size:13px;font-weight:800;padding:4px 12px;border-radius:999px;box-shadow:0 3px 8px rgba(239,159,39,.5);}
 
-  /* フッター */
+  /* くわしく みる ボタン + フッター */
   .foot{margin-top:34px;text-align:center;background:rgba(255,255,255,.05);
     border:1.5px solid rgba(250,238,218,.18);border-radius:20px;padding:22px 18px;}
   .foot p{font-size:15px;color:#EADFc8;line-height:1.7;}
-  .foot .more{display:inline-block;margin-top:14px;padding:12px 22px;border-radius:999px;
+  .more{display:inline-block;margin-top:14px;padding:13px 26px;border-radius:999px;
     background:linear-gradient(180deg,var(--sun),var(--gold));color:#3a2200;font-weight:800;
-    font-size:15px;border:none;box-shadow:0 5px 16px rgba(239,159,39,.45);cursor:not-allowed;opacity:.75;}
+    font-size:16px;border:none;box-shadow:0 5px 16px rgba(239,159,39,.45);cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease;}
+  .more:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(239,159,39,.55);}
+  .more:active{transform:translateY(0);}
   .foot .note{margin-top:10px;font-size:12px;color:#9aa6b2;opacity:.85;}
+
+  /* ===== 詳細(5タイプ + おすすめ) ===== */
+  .detail{margin-top:30px;display:none;}
+  .detail.show{display:block;animation:fadein .5s both;}
+  @keyframes fadein{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+  .trow{display:flex;align-items:center;gap:14px;background:var(--cream);color:var(--ink);
+    border-radius:18px;padding:14px 16px;margin-bottom:12px;border-left:8px solid var(--tc,var(--gold));
+    box-shadow:0 8px 22px rgba(0,0,0,.3);animation:pop .5s both;}
+  .trow .tico{font-size:34px;line-height:1;flex:0 0 auto;width:44px;text-align:center;}
+  .trow .tbody{flex:1 1 auto;min-width:0;}
+  .trow .tlabel{font-size:15px;font-weight:800;color:var(--tcd,var(--gold-dark));}
+  .trow .tcopy{font-size:16px;font-weight:700;margin-top:2px;line-height:1.4;}
+  .trow .tnum{font-size:12px;color:#6a737d;margin-top:5px;}
+  .stars{font-size:20px;letter-spacing:2px;margin-top:4px;line-height:1;}
+  .stars .on{color:var(--gold);}
+  .stars .off{color:#d9d2c2;}
+  .trow.soon{background:rgba(255,255,255,.06);color:#cfc8e6;border-left-color:rgba(250,238,218,.3);box-shadow:none;}
+  .trow.soon .tlabel{color:#cfc8e6;}
+  .trow.soon .tcopy{font-size:14px;font-weight:600;color:#b9b2d2;}
+  .soontag{display:inline-block;font-size:12px;font-weight:800;color:#3a2200;
+    background:var(--sun);border-radius:999px;padding:3px 10px;}
+
+  .reco{margin-top:22px;background:linear-gradient(165deg,#3a2a08,#241803);
+    border:2px solid var(--gold);border-radius:22px;padding:22px 18px;text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,.4);}
+  .reco h3{font-size:18px;color:var(--sun);font-weight:800;}
+  .reco .lead{font-size:15px;color:#EADFc8;margin-top:6px;line-height:1.6;}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px;}
+  .chip{background:var(--cream);color:var(--ink);font-weight:800;font-size:15px;
+    padding:11px 18px;border-radius:999px;box-shadow:0 4px 12px rgba(0,0,0,.3);
+    border:2px solid var(--gold);}
+  .chip .ce{margin-right:6px;}
+
   .brand{margin-top:26px;text-align:center;font-size:12px;color:#7d869a;letter-spacing:.08em;}
 </style>
 </head>
@@ -98,7 +131,7 @@
   <section class="hero">
     <div class="crown">👑</div>
     <h1>たんけん、おつかれさま！</h1>
-    <p id="sub">きょうの きみの きろく だよ</p>
+    <p>きょうの きみの きろく だよ</p>
   </section>
 
   <section class="order">
@@ -112,9 +145,15 @@
   </section>
 
   <section class="foot">
-    <p>くわしい けっかは<br>おうちのひとと いっしょに みてね 🌟</p>
-    <button class="more" type="button" disabled>くわしく みる（じゅんびちゅう）</button>
-    <p class="note">※ 5タイプのくわしい てきせい けっかは じゅんびちゅうです</p>
+    <p>くわしい けっかも みられるよ 🌟</p>
+    <button class="more" id="moreBtn" type="button">くわしく みる ▼</button>
+    <p class="note" id="footNote">きみの「とくいの め」と おすすめを みてみよう</p>
+  </section>
+
+  <section class="detail" id="detail">
+    <h2>きみの とくいの め</h2>
+    <div id="types"></div>
+    <div class="reco" id="reco"></div>
   </section>
 
   <p class="brand">ASOVision Connect</p>
@@ -129,9 +168,11 @@
   var d = {
     order:{ iro:num('vorder_iro'), oto:num('vorder_oto'), shikumi:num('vorder_shikumi') },
     iro_taps:num('iro_taps'), oto_steps:num('oto_steps'),
-    shikumi_place:num('shikumi_place'), shikumi_runs:num('shikumi_runs'),
-    shikumi_goals:num('shikumi_goals')
+    shikumi_place:num('shikumi_place'), shikumi_runs:num('shikumi_runs'), shikumi_goals:num('shikumi_goals'),
+    iro_colors:num('iro_colors'), oto_notes:num('oto_notes'),
+    iro_dwell:num('iro_dwell'), oto_dwell:num('oto_dwell'), shikumi_dwell:num('shikumi_dwell')
   };
+  function secs(frames){ return Math.round(frames/60); }
 
   var rooms = {
     iro:    { label:'いろと かたち', icon:'🎨', c:'var(--iro)',     cd:'var(--iro-d)' },
@@ -139,24 +180,19 @@
     shikumi:{ label:'しくみの へや', icon:'🤖', c:'var(--shikumi)', cd:'var(--shikumi-d)' }
   };
 
-  // ---- たんけんじゅん (order 1-3 で並べ替え。0=未記録は末尾) ----
+  // ---- たんけんじゅん ----
   var keys = ['iro','oto','shikumi'];
-  keys.sort(function(a,b){
-    var oa = d.order[a]||99, ob = d.order[b]||99; return oa - ob;
-  });
+  keys.sort(function(a,b){ return (d.order[a]||99) - (d.order[b]||99); });
   var stamps = document.getElementById('stamps');
   keys.forEach(function(k,i){
     if(i>0){ var ar=document.createElement('span'); ar.className='arrow'; ar.textContent='▶'; stamps.appendChild(ar); }
-    var o = d.order[k];
-    var el = document.createElement('div'); el.className='stamp';
-    el.style.animationDelay = (i*0.12)+'s';
-    el.innerHTML = '<span class="n">'+(o>0?o:'–')+'</span>'+
-                   '<span class="e">'+rooms[k].icon+'</span>'+
-                   '<span class="l">'+rooms[k].label+'</span>';
+    var o=d.order[k], el=document.createElement('div'); el.className='stamp';
+    el.style.animationDelay=(i*0.12)+'s';
+    el.innerHTML='<span class="n">'+(o>0?o:'–')+'</span><span class="e">'+rooms[k].icon+'</span><span class="l">'+rooms[k].label+'</span>';
     stamps.appendChild(el);
   });
 
-  // ---- やってみたこと カード (全肯定) ----
+  // ---- やってみたこと(サマリ) ----
   function iroMsg(){ return d.iro_taps>0 ? ('いろや かたちを '+d.iro_taps+'かい ためしたね！') : 'いろの へやを のぞいたね！'; }
   function otoMsg(){ return d.oto_steps>0 ? ('おとを '+d.oto_steps+'かい ならしたね！') : 'おとの へやを のぞいたね！'; }
   function shikumiMsg(){
@@ -165,45 +201,110 @@
     if(d.shikumi_place>0) return 'ぶひんを あつめたね！';
     return 'しくみの へやを のぞいたね！';
   }
-  var cards = [
-    { k:'iro',     msg:iroMsg(),     num:'タップ '+d.iro_taps+'かい',   badge:'' },
-    { k:'oto',     msg:otoMsg(),     num:'ステップ '+d.oto_steps+'かい', badge:'' },
-    { k:'shikumi', msg:shikumiMsg(), num:'じっこう '+d.shikumi_runs+'かい / ゴール '+d.shikumi_goals+'かい',
-      badge: d.shikumi_goals>0 ? '🏆 クリア！' : '' }
+  var cards=[
+    {k:'iro',msg:iroMsg(),num:'タップ '+d.iro_taps+'かい',badge:''},
+    {k:'oto',msg:otoMsg(),num:'ステップ '+d.oto_steps+'かい',badge:''},
+    {k:'shikumi',msg:shikumiMsg(),num:'じっこう '+d.shikumi_runs+'かい / ゴール '+d.shikumi_goals+'かい',badge:d.shikumi_goals>0?'🏆 クリア！':''}
   ];
-  var grid = document.getElementById('grid');
+  var grid=document.getElementById('grid');
   cards.forEach(function(c,i){
-    var r = rooms[c.k];
-    var el = document.createElement('div'); el.className='card';
-    el.style.setProperty('--rc', r.c); el.style.setProperty('--rcd', r.cd);
-    el.style.animationDelay = (0.15 + i*0.12)+'s';
-    el.innerHTML = '<div class="ico">'+r.icon+'</div>'+
-                   '<div class="rn">'+r.label+'</div>'+
-                   '<div class="msg">'+c.msg+'</div>'+
-                   (c.badge?('<div class="badge">'+c.badge+'</div>'):'')+
-                   '<div class="num">'+c.num+'</div>';
+    var r=rooms[c.k], el=document.createElement('div'); el.className='card';
+    el.style.setProperty('--rc',r.c); el.style.setProperty('--rcd',r.cd); el.style.animationDelay=(0.15+i*0.12)+'s';
+    el.innerHTML='<div class="ico">'+r.icon+'</div><div class="rn">'+r.label+'</div><div class="msg">'+c.msg+'</div>'+
+                 (c.badge?('<div class="badge">'+c.badge+'</div>'):'')+'<div class="num">'+c.num+'</div>';
     grid.appendChild(el);
   });
 
-  // ---- 装飾: 星 + 紙吹雪 (軽量・自己生成) ----
-  var sc = document.getElementById('stars');
+  // ===== 詳細: 5タイプ評価 =====
+  // ★ 杉原様/岸田様 調整可能: しきい値 と スコア式。全肯定のため最低1★。
+  var STAR_TH = [3, 8, 16, 28];           // value >= これ -> 2,3,4,5★ (それ未満は1★)
+  function toStars(v){ var s=1; for(var i=0;i<STAR_TH.length;i++){ if(v>=STAR_TH[i]) s=i+2; } return s; }
+  var score = {
+    shikaku: d.iro_taps + d.iro_colors*2 + Math.floor(secs(d.iro_dwell)/10),
+    chokaku: d.oto_steps + d.oto_notes*2 + Math.floor(secs(d.oto_dwell)/10),
+    shikumi: d.shikumi_place + d.shikumi_runs*2 + d.shikumi_goals*5 + Math.floor(secs(d.shikumi_dwell)/10)
+  };
+
+  function starHTML(s){
+    var h=''; for(var i=1;i<=5;i++){ h += '<span class="'+(i<=s?'on':'off')+'">★</span>'; } return h;
+  }
+  function shikakuCopy(s){ return s>=4?'いろと かたちが だいすき！':(s>=2?'いろを たのしんで みつけたね！':'いろの せかいを のぞいたね！'); }
+  function chokakuCopy(s){ return s>=4?'おとが だいすき！':(s>=2?'おとを たのしんだね！':'おとの せかいを のぞいたね！'); }
+  function shikumiCopy(s){ return d.shikumi_goals>0?'かんがえて ゴールできた！':(s>=2?'しくみを かんがえたね！':'しくみの せかいを のぞいたね！'); }
+
+  // 5タイプ(設計書の順: 視覚・聴覚・運動・ことば・しくみ)。運動・ことばは「これからのへや」。
+  var TYPES = [
+    { key:'shikaku', label:'しかく（みる）',     icon:'👁️', active:true, c:'var(--iro)',     cd:'var(--iro-d)',
+      stars:toStars(score.shikaku), copy:shikakuCopy(toStars(score.shikaku)),
+      num:'タップ '+d.iro_taps+'かい・いろ '+d.iro_colors+'しゅるい・'+secs(d.iro_dwell)+'びょう',
+      lessons:[['🎨','おえかき'],['🖌️','アート'],['🧩','こうさく']] },
+    { key:'chokaku', label:'ちょうかく（きく）', icon:'👂', active:true, c:'var(--oto)',     cd:'var(--oto-d)',
+      stars:toStars(score.chokaku), copy:chokakuCopy(toStars(score.chokaku)),
+      num:'おと '+d.oto_steps+'かい・'+d.oto_notes+'しゅるい・'+secs(d.oto_dwell)+'びょう',
+      lessons:[['🎹','ピアノ'],['🎶','リトミック'],['🎤','うた']] },
+    { key:'undou',  label:'うんどう（からだ）', icon:'🏃', active:false, c:'var(--undou)', cd:'#a87f12' },
+    { key:'kotoba', label:'ことば',             icon:'📖', active:false, c:'var(--kotoba)', cd:'#3f7fb0' },
+    { key:'shikumi',label:'しくみ（かんがえる）',icon:'🤖', active:true, c:'var(--shikumi)', cd:'var(--shikumi-d)',
+      stars:toStars(score.shikumi), copy:shikumiCopy(toStars(score.shikumi)),
+      num:'じっこう '+d.shikumi_runs+'・ゴール '+d.shikumi_goals+'・'+secs(d.shikumi_dwell)+'びょう',
+      lessons:[['💻','プログラミング'],['🤖','ロボット'],['🧱','ブロックあそび']] }
+  ];
+
+  var tbox=document.getElementById('types');
+  TYPES.forEach(function(t,i){
+    var el=document.createElement('div');
+    el.className='trow'+(t.active?'':' soon');
+    el.style.setProperty('--tc',t.c); el.style.setProperty('--tcd',t.cd); el.style.animationDelay=(i*0.08)+'s';
+    if(t.active){
+      el.innerHTML='<div class="tico">'+t.icon+'</div><div class="tbody">'+
+        '<div class="tlabel">'+t.label+'</div>'+
+        '<div class="stars">'+starHTML(t.stars)+'</div>'+
+        '<div class="tcopy">'+t.copy+'</div>'+
+        '<div class="tnum">'+t.num+'</div></div>';
+    } else {
+      el.innerHTML='<div class="tico">'+t.icon+'</div><div class="tbody">'+
+        '<div class="tlabel">'+t.label+'</div>'+
+        '<div class="tcopy">これからの へや <span class="soontag">じゅんびちゅう</span></div></div>';
+    }
+    tbox.appendChild(el);
+  });
+
+  // ===== おすすめの習い事(評価できた中で いちばん の芽 から) =====
+  var actives=TYPES.filter(function(t){return t.active;});
+  actives.sort(function(a,b){ return score[b.key]-score[a.key]; });
+  var top=actives[0];
+  var reco=document.getElementById('reco');
+  var chips=top.lessons.map(function(l){ return '<span class="chip"><span class="ce">'+l[0]+'</span>'+l[1]+'</span>'; }).join('');
+  reco.innerHTML='<h3>🌟 きみに ぴったり かも！</h3>'+
+    '<p class="lead">「'+top.label+'」の めが でているよ。<br>こんな ならいごとが たのしいかも！</p>'+
+    '<div class="chips">'+chips+'</div>';
+
+  // ===== くわしく みる ボタン =====
+  var btn=document.getElementById('moreBtn'), detail=document.getElementById('detail'), note=document.getElementById('footNote');
+  btn.addEventListener('click', function(){
+    var open=detail.classList.toggle('show');
+    btn.textContent = open ? 'とじる ▲' : 'くわしく みる ▼';
+    if(open){
+      note.textContent='きみの「とくいの め」と おすすめだよ';
+      detail.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+  });
+
+  // ===== 装飾: 星 + 紙吹雪 =====
+  var sc=document.getElementById('stars');
   for(var s=0;s<70;s++){
     var st=document.createElement('span'); st.className='star';
-    var size=Math.random()*2+1;
-    st.style.width=st.style.height=size+'px';
+    var size=Math.random()*2+1; st.style.width=st.style.height=size+'px';
     st.style.left=(Math.random()*100)+'%'; st.style.top=(Math.random()*100)+'%';
-    st.style.setProperty('--d',(Math.random()*3+2)+'s');
-    st.style.setProperty('--dl',(Math.random()*3)+'s');
+    st.style.setProperty('--d',(Math.random()*3+2)+'s'); st.style.setProperty('--dl',(Math.random()*3)+'s');
     sc.appendChild(st);
   }
   var cc=document.getElementById('confetti');
   var cols=['#EF9F27','#FAC775','#F0997B','#AFA9EC','#5DCAA5','#FAEEDA'];
   for(var f=0;f<26;f++){
     var cf=document.createElement('span'); cf.className='cf';
-    cf.style.left=(Math.random()*100)+'%';
-    cf.style.background=cols[f%cols.length];
-    cf.style.setProperty('--fd',(Math.random()*5+6)+'s');
-    cf.style.setProperty('--fl',(Math.random()*8)+'s');
+    cf.style.left=(Math.random()*100)+'%'; cf.style.background=cols[f%cols.length];
+    cf.style.setProperty('--fd',(Math.random()*5+6)+'s'); cf.style.setProperty('--fl',(Math.random()*8)+'s');
     cc.appendChild(cf);
   }
 })();
