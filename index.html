@@ -125,6 +125,8 @@
   .locked-wrap{position:relative;}
   .locked-content{transition:filter .35s ease;}
   .locked .locked-content{filter:blur(9px);pointer-events:none;user-select:none;}
+  /* ロック中は詳細の★(評価)を完全に隠す。ぼかし越しに金色の星が透けるのを防ぐ。 */
+  .locked .stars{visibility:hidden;}
   .lock-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:16px;}
   .locked .lock-overlay{display:flex;}
   .lock-card{background:rgba(20,17,40,.9);border:2px solid var(--gold);border-radius:22px;
@@ -352,10 +354,21 @@
   // 注意: 静的ページのため「見た目のロック」です(開発者ツール等で回避可能)。確実な課金保護にはバックエンドが必要。
   var STRIPE_LINK = "https://buy.stripe.com/28E9ATgdb4J78MMbXi04800"; // Stripe 決済リンク(2026-06-12 設定)
   var PAID_KEY = "kekka_paid_v1";
-  var paidNow = (new URLSearchParams(location.search)).get('paid')==='1';
+  var UNLOCK_MS = 3*24*60*60*1000;  // 解除の有効期間 = 3日間。経過後は記憶を消し、再びモザイク。
+  var _qp = new URLSearchParams(location.search);
+  var paidNow = _qp.get('paid')==='1';
+  // テスト用: ?reset=1 で「解除記憶」をクリアし、モザイク状態を再確認できる(本番では使わない)。
+  if(_qp.get('reset')==='1'){ try{ localStorage.removeItem(PAID_KEY); }catch(e){} }
+  // 決済直後(?paid=1)は「解除した時刻(ミリ秒)」を保存。以後この時刻から3日間だけ有効。
+  if(paidNow){ try{ localStorage.setItem(PAID_KEY, String(Date.now())); }catch(e){} }
   var paidStored = false;
-  try{ paidStored = localStorage.getItem(PAID_KEY)==='1'; }catch(e){}
-  if(paidNow){ try{ localStorage.setItem(PAID_KEY,'1'); }catch(e){} }
+  try{
+    var _ts = parseInt(localStorage.getItem(PAID_KEY), 10);
+    if(!isNaN(_ts)){
+      if((Date.now() - _ts) < UNLOCK_MS){ paidStored = true; }
+      else { localStorage.removeItem(PAID_KEY); }  // 3日経過 → 記憶削除し再ロック(旧 '1' 値も期限切れ扱い)
+    }
+  }catch(e){}
   var lockWrap = document.getElementById('lockWrap');
   if(paidNow || paidStored){ lockWrap.classList.remove('locked'); }
   var payBtn = document.getElementById('payBtn');
